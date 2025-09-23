@@ -103,3 +103,9 @@ dump.rdb
 # Database dumps
 *.sql
 *.dump
+
+# claude
+.claude/
+.claude-flow/
+.hive-mind/
+
