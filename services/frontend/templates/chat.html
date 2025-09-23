@@ -124,7 +124,7 @@ async function loadSession(sessionId) {
     document.querySelector(`[data-session-id="${sessionId}"]`).classList.add('active');
     
     try {
-        const response = await SkynetAuth.apiCall(`/frontend/sessions/${sessionId}/`);
+        const response = await window.SkynetAuth.apiCall(`/frontend/sessions/${sessionId}/`);
         const data = await response.json();
         
         document.getElementById('chat-title').textContent = data.session.title;
@@ -233,7 +233,7 @@ document.getElementById('chat-form').addEventListener('submit', async function(e
     scrollToBottom();
     
     try {
-        const response = await SkynetAuth.apiCall('/frontend/chat/', {
+        const response = await window.SkynetAuth.apiCall('/frontend/chat/', {
             method: 'POST',
             body: JSON.stringify({
                 message: message,
