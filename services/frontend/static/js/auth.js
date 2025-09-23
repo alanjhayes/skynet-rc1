@@ -70,6 +70,7 @@ class SkynetAuth {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': SkynetRC1.getCSRFToken()
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     refresh: refreshToken
                 })
@@ -99,7 +100,8 @@ class SkynetAuth {
 
         let response = await fetch(url, {
             ...options,
-            headers
+            headers,
+            credentials: 'include'  // Always include session cookies
         });
 
         // If token expired, try to refresh
@@ -109,7 +111,8 @@ class SkynetAuth {
                 headers['Authorization'] = `Bearer ${newToken}`;
                 response = await fetch(url, {
                     ...options,
-                    headers
+                    headers,
+                    credentials: 'include'
                 });
             }
         }
@@ -127,6 +130,7 @@ class SkynetAuth {
                 await fetch('/api/auth/logout/', {
                     method: 'POST',
                     headers: this.getAuthHeaders(),
+                    credentials: 'include',
                     body: JSON.stringify({
                         refresh: refreshToken
                     })
