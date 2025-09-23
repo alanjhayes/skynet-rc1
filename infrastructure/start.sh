@@ -7,22 +7,35 @@ set -e
 
 echo "🚀 Skynet RC1 - Smart Startup Script"
 echo "======================================"
+echo "⏰ Started at: $(date)"
+echo "🖥️  Platform: $(uname -s) $(uname -m)"
+echo ""
 
-# Detect Docker Compose command
+# Detect Docker Compose command and version
 DOCKER_COMPOSE=""
+COMPOSE_VERSION=""
+
 if command -v docker-compose >/dev/null 2>&1; then
     DOCKER_COMPOSE="docker-compose"
+    COMPOSE_VERSION=$(docker-compose version --short 2>/dev/null || echo "unknown")
+    echo "🔧 Using Docker Compose V1: $DOCKER_COMPOSE ($COMPOSE_VERSION)"
 elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
     DOCKER_COMPOSE="docker compose"
+    COMPOSE_VERSION=$(docker compose version --short 2>/dev/null || echo "unknown")
+    echo "🔧 Using Docker Compose V2: $DOCKER_COMPOSE ($COMPOSE_VERSION)"
 else
     echo "❌ Error: Neither 'docker-compose' nor 'docker compose' found!"
-    echo "   Please install Docker Compose:"
-    echo "   • For Docker Compose V1: https://docs.docker.com/compose/install/"
-    echo "   • For Docker Compose V2: Included with Docker Desktop or install via package manager"
+    echo ""
+    echo "📥 Install Docker Compose:"
+    echo "   • Docker Compose V1: https://docs.docker.com/compose/install/"
+    echo "   • Docker Compose V2: Included with Docker Desktop"
+    echo "   • Linux: apt install docker-compose-plugin"
+    echo ""
+    echo "🔍 Verify installation with:"
+    echo "   docker-compose --version  # V1"
+    echo "   docker compose version    # V2"
     exit 1
 fi
-
-echo "🔧 Using Docker Compose command: $DOCKER_COMPOSE"
 echo ""
 
 # Function to check if a port is in use
