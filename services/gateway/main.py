@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Form
+from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Form, Header
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import requests
@@ -18,6 +18,7 @@ app.add_middleware(
 # Service URLs
 document_service_url = os.environ.get('DOCUMENT_SERVICE_URL', 'http://document:8000')
 ai_chat_service_url = os.environ.get('AI_CHAT_SERVICE_URL', 'http://ai-chat:8000')
+frontend_service_url = os.environ.get('FRONTEND_SERVICE_URL', 'http://frontend:8000')
 
 @app.get("/health")
 async def health_check():
@@ -103,6 +104,60 @@ async def get_session_messages(session_id: int, user_id: int):
         return response.json()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# Authentication endpoints - proxy to frontend service
+@app.post("/api/auth/login")
+async def login(request: dict):
+    """Authenticate user - proxy to frontend service"""
+    try:
+        response = requests.post(f"{frontend_service_url}/api/auth/login/", json=request, timeout=30)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            # Return the error response from frontend
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Authentication service error: {str(e)}")
+
+@app.post("/api/auth/logout")
+async def logout(request: dict):
+    """Logout user - proxy to frontend service"""
+    try:
+        response = requests.post(f"{frontend_service_url}/api/auth/logout/", json=request, timeout=30)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Authentication service error: {str(e)}")
+
+@app.get("/api/auth/profile")
+async def get_profile(authorization: Optional[str] = Header(None)):
+    """Get user profile - proxy to frontend service"""
+    try:
+        headers = {}
+        if authorization:
+            headers['Authorization'] = authorization
+        
+        response = requests.get(f"{frontend_service_url}/api/auth/profile/", headers=headers, timeout=30)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Authentication service error: {str(e)}")
+
+@app.post("/api/auth/refresh")
+async def refresh_token(request: dict):
+    """Refresh JWT token - proxy to frontend service"""
+    try:
+        response = requests.post(f"{frontend_service_url}/api/auth/refresh/", json=request, timeout=30)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Authentication service error: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
