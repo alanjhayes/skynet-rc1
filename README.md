@@ -79,9 +79,30 @@ LDAP_BIND_PASSWORD=your-service-password
 ```
 
 ### 3. **Start the Platform**
+
+**Recommended (Smart Startup):**
+```bash
+cd infrastructure
+./start.sh
+```
+
+**Manual Startup:**
 ```bash
 cd infrastructure
 docker-compose up -d
+```
+
+**Troubleshooting Port Conflicts:**
+If you encounter port binding errors:
+```bash
+# Stop any running services
+docker-compose down
+
+# Check what's using the ports
+sudo netstat -tulpn | grep ':8080\|:8000\|:80'
+
+# Start with the smart script
+./start.sh
 ```
 
 ### 4. **Access the Platform**
