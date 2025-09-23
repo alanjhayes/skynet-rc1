@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Skynet RC1{% endblock %}
+
+{% block content %}
+<div class="container-fluid h-100">
+    <div class="row h-100 justify-content-center align-items-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-robot fa-3x text-primary mb-3"></i>
+                        <h3>Skynet RC1</h3>
+                        <p class="text-muted">Document Intelligence Platform</p>
+                        
+                        {% if ldap_enabled %}
+                            <small class="badge bg-success">LDAP Enabled</small>
+                        {% else %}
+                            <small class="badge bg-info">Local Authentication</small>
+                        {% endif %}
+                        
+                        {% if jwt_enabled %}
+                            <small class="badge bg-primary">JWT Enabled</small>
+                        {% else %}
+                            <small class="badge bg-warning">Session Auth</small>
+                        {% endif %}
+                    </div>
+                    
+                    <form id="universal-login-form">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                            {% if ldap_enabled %}
+                                <div class="form-text">
+                                    Use your Active Directory username
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        
+                        <div id="login-error" class="alert alert-danger d-none"></div>
+                        
+                        <button type="submit" class="btn btn-primary w-100" id="login-button">
+                            <span class="login-text">Sign In</span>
+                            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        </button>
+                    </form>
+                    
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            {% if ldap_enabled %}
+                                Active Directory authentication with fallback to local users
+                            {% else %}
+                                Local user authentication
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('universal-login-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const errorDiv = document.getElementById('login-error');
+    const loginButton = document.getElementById('login-button');
+    const loginText = loginButton.querySelector('.login-text');
+    const spinner = loginButton.querySelector('.spinner-border');
+    
+    // Show loading state
+    loginButton.disabled = true;
+    loginText.textContent = 'Signing In...';
+    spinner.classList.remove('d-none');
+    errorDiv.classList.add('d-none');
+    
+    try {
+        const response = await fetch('/api/auth/login/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': SkynetRC1.getCSRFToken()
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            {% if jwt_enabled %}
+                // Store JWT tokens if available
+                if (data.access && data.refresh) {
+                    localStorage.setItem('access_token', data.access);
+                    localStorage.setItem('refresh_token', data.refresh);
+                    localStorage.setItem('user_info', JSON.stringify(data.user));
+                } else if (data.success) {
+                    // Session authentication mode
+                    localStorage.setItem('user_info', JSON.stringify(data.user));
+                    localStorage.setItem('auth_mode', 'session');
+                }
+            {% else %}
+                // Session authentication only
+                localStorage.setItem('user_info', JSON.stringify(data.user));
+                localStorage.setItem('auth_mode', 'session');
+            {% endif %}
+            
+            // Redirect to main application
+            window.location.href = '/';
+        } else {
+            showError(data.error || 'Login failed');
+        }
+        
+    } catch (error) {
+        showError('Network error: ' + error.message);
+    } finally {
+        // Reset button state
+        loginButton.disabled = false;
+        loginText.textContent = 'Sign In';
+        spinner.classList.add('d-none');
+    }
+});
+
+function showError(message) {
+    const errorDiv = document.getElementById('login-error');
+    errorDiv.textContent = message;
+    errorDiv.classList.remove('d-none');
+}
+
+// Check if user is already logged in
+{% if jwt_enabled %}
+if (localStorage.getItem('access_token')) {
+    // Verify token validity and redirect if valid
+    fetch('/api/auth/profile/', {
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+        }
+    }).then(response => {
+        if (response.ok) {
+            window.location.href = '/';
+        }
+    });
+}
+{% else %}
+// For session auth, just check if we're already authenticated
+fetch('/api/auth/profile/', {
+    credentials: 'include'
+}).then(response => {
+    if (response.ok) {
+        window.location.href = '/';
+    }
+});
+{% endif %}
+</script>
+
+<style>
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+.badge {
+    font-size: 0.7em;
+    margin: 0 2px;
+}
+</style>
+{% endblock %}

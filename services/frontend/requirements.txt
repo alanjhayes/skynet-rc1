@@ -1,0 +1,16 @@
+Django==4.2.7
+psycopg2-binary==2.9.7
+redis==5.0.1
+django-redis==5.4.0
+requests==2.31.0
+django-cors-headers==4.3.1
+whitenoise==6.6.0
+gunicorn==21.2.0
+dj-database-url==2.1.0
+# LDAP Authentication
+python-ldap==3.4.3
+django-auth-ldap==4.6.0
+# JWT Authentication
+PyJWT==2.8.0
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.0

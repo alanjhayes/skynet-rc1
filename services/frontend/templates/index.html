@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Skynet RC1 - AI Chat with RAG{% endblock %}
+
+{% block content %}
+<div class="hero-section py-5">
+    <div class="container text-center">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 mb-4">
+                    <i class="fas fa-robot text-primary"></i>
+                    Skynet RC1
+                </h1>
+                <p class="lead mb-4">
+                    Simplified AI chat with Retrieval-Augmented Generation (RAG)
+                </p>
+                <p class="mb-4">
+                    Upload your documents and chat with an AI that understands your content. 
+                    Powered by local AI models for privacy and control.
+                </p>
+                
+                {% if user.is_authenticated %}
+                    <div class="d-grid gap-2 d-md-block">
+                        <a href="{% url 'chat' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-comments"></i> Start Chatting
+                        </a>
+                        <a href="{% url 'documents' %}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-upload"></i> Upload Documents
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="d-grid gap-2 d-md-block">
+                        <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                        <a href="{% url 'register' %}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-user-plus"></i> Register
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="features-section py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 text-center mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="fas fa-upload fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Document Upload</h5>
+                        <p class="card-text">
+                            Upload PDF, Word, and text documents. They're processed locally for your privacy.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="fas fa-search fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Semantic Search</h5>
+                        <p class="card-text">
+                            Advanced vector search finds relevant content from your documents automatically.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="fas fa-robot fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">AI Chat</h5>
+                        <p class="card-text">
+                            Chat with AI that understands your documents and provides contextual answers.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

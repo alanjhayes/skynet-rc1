@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}Chat - Skynet RC1{% endblock %}
+
+{% block content %}
+<div class="chat-container py-3">
+    <div class="row h-100">
+        <!-- Chat Sessions Sidebar -->
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Chat Sessions</h6>
+                    <button class="btn btn-sm btn-primary" onclick="newChat()">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div id="sessions-list" class="list-group list-group-flush">
+                        {% for session in sessions %}
+                        <button class="list-group-item list-group-item-action session-item" 
+                                data-session-id="{{ session.id }}"
+                                onclick="loadSession({{ session.id }})">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="text-truncate">
+                                    <strong>{{ session.title }}</strong>
+                                    <small class="text-muted d-block">
+                                        {{ session.updated_at|date:"M d, H:i" }}
+                                    </small>
+                                </div>
+                            </div>
+                        </button>
+                        {% empty %}
+                        <div class="text-center p-3 text-muted">
+                            <p>No chat sessions yet</p>
+                            <button class="btn btn-outline-primary" onclick="newChat()">
+                                Start First Chat
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat Area -->
+        <div class="col-md-9">
+            <div class="card h-100 d-flex flex-column">
+                <div class="card-header">
+                    <h6 class="mb-0" id="chat-title">Select a chat session or start a new one</h6>
+                </div>
+                
+                <!-- Messages Area -->
+                <div class="card-body flex-fill overflow-auto" id="messages-container">
+                    <div id="messages" class="h-100 d-flex flex-column justify-content-end">
+                        <div class="text-center text-muted p-4">
+                            <i class="fas fa-robot fa-3x mb-3"></i>
+                            <p>Welcome to Skynet RC1! Start a conversation or upload documents first.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Input Area -->
+                <div class="card-footer">
+                    <form id="chat-form" class="d-flex gap-2">
+                        <input type="text" 
+                               class="form-control" 
+                               id="message-input" 
+                               placeholder="Ask me anything about your documents..." 
+                               disabled>
+                        <button type="submit" class="btn btn-primary" id="send-button" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentSessionId = null;
+
+// Initialize chat
+document.addEventListener('DOMContentLoaded', function() {
+    const sessions = document.querySelectorAll('.session-item');
+    if (sessions.length > 0) {
+        // Load the first session by default
+        const firstSession = sessions[0];
+        loadSession(firstSession.dataset.sessionId);
+    }
+});
+
+// New chat
+function newChat() {
+    currentSessionId = null;
+    document.getElementById('chat-title').textContent = 'New Chat';
+    document.getElementById('messages').innerHTML = `
+        <div class="text-center text-muted p-4">
+            <i class="fas fa-robot fa-3x mb-3"></i>
+            <p>Start a new conversation! Ask me anything about your documents.</p>
+        </div>
+    `;
+    
+    // Enable input
+    document.getElementById('message-input').disabled = false;
+    document.getElementById('send-button').disabled = false;
+    
+    // Remove active class from all sessions
+    document.querySelectorAll('.session-item').forEach(item => {
+        item.classList.remove('active');
+    });
+}
+
+// Load session
+async function loadSession(sessionId) {
+    currentSessionId = sessionId;
+    
+    // Mark session as active
+    document.querySelectorAll('.session-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.querySelector(`[data-session-id="${sessionId}"]`).classList.add('active');
+    
+    try {
+        const response = await SkynetAuth.apiCall(`/frontend/sessions/${sessionId}/`);
+        const data = await response.json();
+        
+        document.getElementById('chat-title').textContent = data.session.title;
+        
+        const messagesContainer = document.getElementById('messages');
+        messagesContainer.innerHTML = '';
+        
+        data.messages.forEach(message => {
+            addMessage(message.role, message.content, message.used_documents);
+        });
+        
+        // Enable input
+        document.getElementById('message-input').disabled = false;
+        document.getElementById('send-button').disabled = false;
+        
+        // Scroll to bottom
+        scrollToBottom();
+        
+    } catch (error) {
+        console.error('Error loading session:', error);
+    }
+}
+
+// Add message to chat
+function addMessage(role, content, usedDocuments = []) {
+    const messagesContainer = document.getElementById('messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}-message mb-3`;
+    
+    const isUser = role === 'user';
+    const icon = isUser ? 'fa-user' : 'fa-robot';
+    const bgClass = isUser ? 'bg-primary text-white' : 'bg-light';
+    const alignClass = isUser ? 'ms-auto' : '';
+    
+    let documentsHtml = '';
+    if (usedDocuments && usedDocuments.length > 0) {
+        documentsHtml = `
+            <div class="mt-2">
+                <small class="text-muted">
+                    <i class="fas fa-file-alt"></i> Sources: ${usedDocuments.join(', ')}
+                </small>
+            </div>
+        `;
+    }
+    
+    messageDiv.innerHTML = `
+        <div class="d-flex ${isUser ? 'justify-content-end' : ''}">
+            <div class="message-bubble ${bgClass} p-3 rounded-3 ${alignClass}" style="max-width: 70%;">
+                <div class="d-flex align-items-start gap-2">
+                    <i class="fas ${icon} mt-1"></i>
+                    <div class="flex-fill">
+                        <div class="message-content">${content}</div>
+                        ${documentsHtml}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+}
+
+// Scroll to bottom
+function scrollToBottom() {
+    const container = document.getElementById('messages-container');
+    container.scrollTop = container.scrollHeight;
+}
+
+// Handle form submission
+document.getElementById('chat-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message immediately
+    addMessage('user', message);
+    messageInput.value = '';
+    
+    // Disable input while processing
+    messageInput.disabled = true;
+    document.getElementById('send-button').disabled = true;
+    
+    // Add thinking indicator
+    const thinkingDiv = document.createElement('div');
+    thinkingDiv.id = 'thinking-indicator';
+    thinkingDiv.className = 'message assistant-message mb-3';
+    thinkingDiv.innerHTML = `
+        <div class="d-flex">
+            <div class="message-bubble bg-light p-3 rounded-3">
+                <div class="d-flex align-items-start gap-2">
+                    <i class="fas fa-robot mt-1"></i>
+                    <div class="flex-fill">
+                        <div class="typing-indicator">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('messages').appendChild(thinkingDiv);
+    scrollToBottom();
+    
+    try {
+        const response = await SkynetAuth.apiCall('/frontend/chat/', {
+            method: 'POST',
+            body: JSON.stringify({
+                message: message,
+                session_id: currentSessionId
+            })
+        });
+        
+        const data = await response.json();
+        
+        // Remove thinking indicator
+        document.getElementById('thinking-indicator').remove();
+        
+        if (response.ok) {
+            // Add assistant response
+            addMessage('assistant', data.response, data.used_documents);
+            
+            // Update current session ID
+            currentSessionId = data.session_id;
+            
+            // Refresh sessions list if this was a new chat
+            if (!document.querySelector(`[data-session-id="${data.session_id}"]`)) {
+                location.reload(); // Simple refresh for now
+            }
+        } else {
+            addMessage('assistant', `Error: ${data.error}`);
+        }
+        
+    } catch (error) {
+        document.getElementById('thinking-indicator').remove();
+        addMessage('assistant', `Error: ${error.message}`);
+    }
+    
+    // Re-enable input
+    messageInput.disabled = false;
+    document.getElementById('send-button').disabled = false;
+    messageInput.focus();
+});
+</script>
+
+<style>
+.chat-container {
+    height: calc(100vh - 80px);
+}
+
+.message-bubble {
+    word-wrap: break-word;
+}
+
+.typing-indicator {
+    display: flex;
+    gap: 4px;
+}
+
+.typing-indicator span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #999;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+.session-item.active {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.session-item.active small {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+</style>
+{% endblock %}
