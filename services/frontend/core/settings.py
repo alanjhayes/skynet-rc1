@@ -7,7 +7,32 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-produc
 
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,frontend,skynet-rc1-frontend').split(',')
+import ipaddress
+
+# Custom ALLOWED_HOSTS validation for IP ranges
+def validate_host(host):
+    # Allow specific hostnames
+    allowed_hosts = ['localhost', '127.0.0.1', '0.0.0.0', 'frontend', 'skynet-rc1-frontend', 'nginx']
+    if host in allowed_hosts:
+        return True
+    
+    # Allow 172.16.0.0/12 range (172.16.0.0 - 172.31.255.255)
+    try:
+        ip = ipaddress.ip_address(host)
+        private_range = ipaddress.ip_network('172.16.0.0/12')
+        if ip in private_range:
+            return True
+    except ValueError:
+        pass
+    
+    return False
+
+class CustomAllowedHostsValidator:
+    def __call__(self, host):
+        return validate_host(host)
+
+# Use wildcard for now and implement custom validation in middleware
+ALLOWED_HOSTS = ['*']  # We'll validate in custom middleware
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -40,6 +65,7 @@ else:
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
+    'core.middleware.CustomAllowedHostsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
