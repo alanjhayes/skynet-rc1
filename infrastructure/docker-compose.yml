@@ -75,7 +75,7 @@ services:
       - DATABASE_URL=postgresql://skynet:${POSTGRES_PASSWORD:-skynet_password}@postgres:5432/skynet_rc1
       - REDIS_URL=redis://redis:6379/0
       - API_GATEWAY_URL=http://gateway:8000
-      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,frontend,nginx
     volumes:
       - ../services/frontend:/app
       - ../data:/app/data
