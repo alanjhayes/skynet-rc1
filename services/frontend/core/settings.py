@@ -66,6 +66,7 @@ else:
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'core.middleware.CustomAllowedHostsMiddleware',
+    'core.csrf_middleware.APICSRFExemptMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

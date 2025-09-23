@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 import json
 
 # Import JWT modules conditionally
@@ -52,6 +53,7 @@ if getattr(settings, 'JWT_AVAILABLE', False):
     class CustomTokenObtainPairView(TokenObtainPairView):
         serializer_class = CustomTokenObtainPairSerializer
 
+@csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
@@ -123,6 +125,7 @@ def login_view(request):
         else:
             return JsonResponse(error_response, status=500)
 
+@csrf_exempt
 @api_view(['POST'])
 def logout_view(request):
     """Logout endpoint - supports both JWT and session logout"""
