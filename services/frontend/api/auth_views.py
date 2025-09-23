@@ -53,7 +53,6 @@ if getattr(settings, 'JWT_AVAILABLE', False):
     class CustomTokenObtainPairView(TokenObtainPairView):
         serializer_class = CustomTokenObtainPairSerializer
 
-@csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
@@ -100,11 +99,27 @@ def login_view(request):
                 # Fallback to session authentication
                 from django.contrib.auth import login
                 login(request, user)
-                return JsonResponse({
+                
+                # Create response and ensure session cookie is set
+                response = JsonResponse({
                     'success': True,
                     'user': user_data,
                     'message': 'Logged in successfully (session mode)'
                 })
+                
+                # Ensure session is saved and cookie is set
+                request.session.save()
+                response.set_cookie(
+                    'sessionid', 
+                    request.session.session_key,
+                    max_age=request.session.get_expiry_age(),
+                    domain=None,  # Use default domain
+                    secure=False,  # Set to True in production with HTTPS
+                    httponly=True,
+                    samesite='Lax'
+                )
+                
+                return response
         else:
             error_response = {'error': 'Invalid credentials'}
             if getattr(settings, 'JWT_AVAILABLE', False):
@@ -125,7 +140,6 @@ def login_view(request):
         else:
             return JsonResponse(error_response, status=500)
 
-@csrf_exempt
 @api_view(['POST'])
 def logout_view(request):
     """Logout endpoint - supports both JWT and session logout"""

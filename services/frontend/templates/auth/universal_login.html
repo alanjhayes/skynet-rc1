@@ -92,6 +92,7 @@ document.getElementById('universal-login-form').addEventListener('submit', async
                 'Content-Type': 'application/json',
                 'X-CSRFToken': SkynetRC1.getCSRFToken()
             },
+            credentials: 'include',  // Include session cookies
             body: JSON.stringify({
                 username: username,
                 password: password
