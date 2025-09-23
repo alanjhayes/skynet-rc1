@@ -7,43 +7,43 @@
 
 Skynet RC1 is an enterprise-grade document intelligence platform that combines **RAG (Retrieval-Augmented Generation)** with **flexible authentication** and **advanced security features**. It allows organizations to upload documents, extract knowledge, and interact with their document collections through an AI-powered chat interface.
 
-## 🚀 Features
+## Features
 
-### 🔐 **Enterprise Authentication**
+### **Enterprise Authentication**
 - **Flexible LDAP/Active Directory Integration** - Optional, configurable via environment variables
 - **JWT Token Authentication** - Secure API access with automatic token refresh
 - **Role-Based Access Control** - Admin, Staff, User, and Readonly permissions
 - **Session Fallback** - Graceful degradation when JWT packages aren't available
 - **User Isolation** - Each user gets their own secure document collection
 
-### 📄 **Document Processing**
+### **Document Processing**
 - **Multi-Format Support** - PDF, Word documents, text files, Markdown
 - **Intelligent Text Extraction** - Handles complex document layouts
 - **Vector Embeddings** - TF-IDF based lightweight embeddings for fast search
 - **Chunking & Overlap** - Smart text chunking with configurable overlap
 - **Async Processing** - Non-blocking document processing pipeline
 
-### 🤖 **AI-Powered Chat**
+### **AI-Powered Chat**
 - **RAG Chat Interface** - Ask questions about uploaded documents
 - **Context-Aware Responses** - AI understands document context
 - **Source Attribution** - Shows which documents were used in responses
 - **Session Management** - Persistent chat sessions with history
 - **Real-time Processing** - Live chat with typing indicators
 
-### 🛡️ **Security & Compliance**
+### **Security & Compliance**
 - **Document-Level Permissions** - Users can only access their own documents
 - **Comprehensive Audit Logging** - All document access and user actions logged
 - **CSRF Protection** - Protection against cross-site request forgery
 - **Secure Headers** - XSS protection and security headers
 - **Permission Matrix** - Granular permissions based on user roles
 
-## 📋 **Prerequisites**
+## **Prerequisites**
 
 - **Docker** and **Docker Compose**
 - **4GB+ RAM** (recommended for AI models)
 - **10GB+ Storage** (for documents and vector databases)
 
-## 🚀 **Quick Start**
+## **Quick Start**
 
 ### 1. **Clone the Repository**
 ```bash
@@ -89,7 +89,7 @@ docker-compose up -d
 - **API Documentation**: http://localhost/api/docs
 - **Admin Interface**: http://localhost/admin
 
-## 🔧 **Configuration Options**
+## **Configuration Options**
 
 ### Authentication Modes
 
@@ -100,11 +100,11 @@ docker-compose up -d
 | **LDAP + Sessions** | `true` | `false` | Legacy enterprise |
 | **Local + Sessions** | `false` | `false` | Minimal setup |
 
-## 📚 **Documentation**
+## **Documentation**
 
 - **[Authentication Guide](infrastructure/AUTHENTICATION.md)** - Complete authentication setup
 
-## 🏛️ **Architecture Overview**
+## **Architecture Overview**
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -126,7 +126,7 @@ docker-compose up -d
                     └─────────────────┘
 ```
 
-## 🐳 **Services**
+## **Services**
 
 | Service | Port | Description |
 |---------|------|-------------|
@@ -140,7 +140,7 @@ docker-compose up -d
 | **qdrant** | 6333 | Vector database |
 | **ollama** | 11434 | AI model server |
 
-## 🔒 **Security Features**
+## **Security Features**
 
 - **JWT Token Security**: 60-minute access tokens, 7-day refresh tokens with rotation
 - **LDAP Integration**: Secure binding with service accounts, group caching
@@ -149,7 +149,7 @@ docker-compose up -d
 - **Permission Checks**: Document-level access control with role validation
 - **CSRF Protection**: All forms protected against cross-site request forgery
 
-## 🤝 **Contributing**
+## **Contributing**
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -157,10 +157,10 @@ docker-compose up -d
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 **License**
+## **License**
 
 This project is licensed under the MIT License.
 
 ---
 
-**Built with ❤️ for enterprise document intelligence**
+**Built with care for enterprise document intelligence**
