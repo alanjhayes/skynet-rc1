@@ -17,6 +17,30 @@ echo "⏰ Started at: $(date 2>/dev/null || echo 'unknown')"
 echo "🖥️  Platform: $(uname -s 2>/dev/null || echo 'unknown') $(uname -m 2>/dev/null || echo 'unknown')"
 echo ""
 
+# Check for .env file
+ENV_FILE="../.env"
+if [ ! -f "$ENV_FILE" ]; then
+    echo "❌ ERROR: .env file not found!"
+    echo ""
+    echo "📋 Please copy .env.example to .env and configure your environment:"
+    echo "   cp .env.example .env"
+    echo "   # Edit .env with your preferred settings"
+    echo ""
+    echo "🔧 Required environment variables:"
+    echo "   - POSTGRES_PASSWORD"
+    echo "   - SECRET_KEY"
+    echo "   - OLLAMA_MODEL"
+    echo ""
+    exit 1
+fi
+
+echo "✅ Found .env file"
+
+# Note about database initialization
+if [ ! -d "../data/postgres" ]; then
+    echo "📊 Database will be initialized on first startup using init.sql"
+fi
+
 # Detect Docker Compose command and version
 DOCKER_COMPOSE=""
 COMPOSE_VERSION=""
