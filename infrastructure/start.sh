@@ -1,14 +1,20 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Skynet RC1 - Smart Startup Script
 # This script handles port conflicts and ensures clean startup
+
+# Ensure we're running in bash
+if [ -z "$BASH_VERSION" ]; then
+    echo "❌ This script requires bash. Please run with: bash start.sh"
+    exit 1
+fi
 
 set -e
 
 echo "🚀 Skynet RC1 - Smart Startup Script"
 echo "======================================"
-echo "⏰ Started at: $(date)"
-echo "🖥️  Platform: $(uname -s) $(uname -m)"
+echo "⏰ Started at: $(date 2>/dev/null || echo 'unknown')"
+echo "🖥️  Platform: $(uname -s 2>/dev/null || echo 'unknown') $(uname -m 2>/dev/null || echo 'unknown')"
 echo ""
 
 # Detect Docker Compose command and version
