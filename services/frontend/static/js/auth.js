@@ -181,7 +181,7 @@ class SkynetAuth {
                 <a class="nav-link" href="/documents/">
                     <i class="fas fa-file-alt"></i> Documents
                 </a>
-                <a class="nav-link" href="#" onclick="SkynetAuth.logout()">
+                <a class="nav-link" href="#" onclick="window.SkynetAuth.logout()">
                     <i class="fas fa-sign-out-alt"></i> Logout (${userInfo ? userInfo.username : 'User'})
                 </a>
             `;
@@ -224,5 +224,5 @@ window.SkynetAuth = new SkynetAuth();
 
 // Initialize authentication when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    SkynetAuth.init();
+    window.SkynetAuth.init();
 });

@@ -159,7 +159,7 @@ async function uploadDocument() {
         const modal = bootstrap.Modal.getInstance(document.getElementById('uploadModal'));
         modal.hide();
         
-        const response = await SkynetAuth.apiCall('/frontend/upload/', {
+        const response = await window.SkynetAuth.apiCall('/frontend/upload/', {
             method: 'POST',
             body: formData
         });
