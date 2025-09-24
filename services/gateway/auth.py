@@ -52,12 +52,18 @@ class JWTAuth:
                         detail="Token has expired"
                     )
             
-            # Validate token type (allow both user_token and service_token)
-            token_type = payload.get('type')
-            if token_type not in ['user_token', 'service_token']:
+            # Validate token type (allow both user_token, service_token, and Django SimpleJWT tokens)
+            token_type = payload.get('type')  # Custom tokens
+            django_token_type = payload.get('token_type')  # Django SimpleJWT tokens
+            
+            # Accept custom tokens (user_token, service_token) or Django SimpleJWT tokens (access)
+            valid_custom_token = token_type in ['user_token', 'service_token']
+            valid_django_token = django_token_type == 'access'
+            
+            if not (valid_custom_token or valid_django_token):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid token type"
+                    detail=f"Invalid token type. Got type='{token_type}', token_type='{django_token_type}'"
                 )
             
             return payload
@@ -85,15 +91,56 @@ class JWTAuth:
         """
         payload = self.decode_token(token)
         
-        return {
-            'user_id': payload.get('user_id'),
-            'username': payload.get('username'),
-            'email': payload.get('email'),
-            'is_staff': payload.get('is_staff', False),
-            'is_superuser': payload.get('is_superuser', False),
-            'groups': payload.get('groups', []),
-            'auth_method': payload.get('auth_method', 'unknown')
-        }
+        # Handle Django SimpleJWT tokens vs custom tokens
+        if payload.get('token_type') == 'access':
+            # Django SimpleJWT token - fetch user info from frontend service
+            try:
+                headers = {'Authorization': f'Bearer {token}'}
+                response = requests.get(f"{self.frontend_url}/api/auth/profile/", headers=headers, timeout=10)
+                if response.status_code == 200:
+                    user_data = response.json().get('user', {})
+                    return {
+                        'user_id': user_data.get('id'),
+                        'username': user_data.get('username'),
+                        'email': user_data.get('email', ''),
+                        'is_staff': user_data.get('is_staff', False),
+                        'is_superuser': user_data.get('is_superuser', False),
+                        'groups': user_data.get('groups', []),
+                        'auth_method': user_data.get('auth_method', 'local')
+                    }
+                else:
+                    # Fallback to basic user info from token
+                    return {
+                        'user_id': payload.get('user_id'),
+                        'username': 'unknown',
+                        'email': '',
+                        'is_staff': False,
+                        'is_superuser': False,
+                        'groups': [],
+                        'auth_method': 'django_jwt'
+                    }
+            except Exception:
+                # Fallback if frontend service is unavailable
+                return {
+                    'user_id': payload.get('user_id'),
+                    'username': 'unknown',
+                    'email': '',
+                    'is_staff': False,
+                    'is_superuser': False,
+                    'groups': [],
+                    'auth_method': 'django_jwt'
+                }
+        else:
+            # Custom token with full user info
+            return {
+                'user_id': payload.get('user_id'),
+                'username': payload.get('username'),
+                'email': payload.get('email'),
+                'is_staff': payload.get('is_staff', False),
+                'is_superuser': payload.get('is_superuser', False),
+                'groups': payload.get('groups', []),
+                'auth_method': payload.get('auth_method', 'unknown')
+            }
     
     async def refresh_token(self, refresh_token: str) -> Optional[Dict[str, Any]]:
         """
