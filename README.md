@@ -51,32 +51,52 @@ git clone https://github.com/yourusername/skynet-rc1.git
 cd skynet-rc1
 ```
 
-### 2. **Configure Authentication**
+### 2. **Configure Environment**
 ```bash
-# Copy example configuration
-cp infrastructure/.env.example infrastructure/.env
+# Copy environment configuration from project root
+cp .env.example .env
 
-# Edit configuration for your needs
-nano infrastructure/.env
+# Edit configuration for your needs  
+nano .env
 ```
+
+The `.env.example` file contains comprehensive configuration options with detailed comments. Here are the key settings:
+
+**Required Settings:**
+- `POSTGRES_PASSWORD` - Database password
+- `SECRET_KEY` - Django secret key (change in production!)
+- `OLLAMA_MODEL` - AI model to download (default: llama3.1:8b)
+
+**Authentication Options:**
+- `JWT_ENABLED=true` - Enable JWT token authentication
+- `LDAP_ENABLED=false` - Enable Active Directory integration
 
 **Basic Configuration (Local Users + JWT):**
 ```bash
-LDAP_ENABLED=false
+POSTGRES_PASSWORD=skynet_password
+SECRET_KEY=django-insecure-change-this-in-production
+OLLAMA_MODEL=llama3.1:8b
 JWT_ENABLED=true
-SECRET_KEY=your-secret-key-here
-JWT_SECRET_KEY=your-jwt-secret-here
+LDAP_ENABLED=false
 ```
 
 **Enterprise Configuration (LDAP + JWT):**
 ```bash
-LDAP_ENABLED=true
+POSTGRES_PASSWORD=your-secure-password
+SECRET_KEY=your-super-secure-django-key
+OLLAMA_MODEL=llama3.1:8b
 JWT_ENABLED=true
+LDAP_ENABLED=true
 LDAP_SERVER_URI=ldap://your-ad-server.company.com:389
-LDAP_BIND_DN=cn=service,ou=users,dc=company,dc=com
-LDAP_BIND_PASSWORD=your-service-password
-# ... additional LDAP settings
+LDAP_BIND_DN=cn=service-account,ou=service-accounts,dc=company,dc=com
+LDAP_BIND_PASSWORD=your-service-account-password
+# ... see .env.example for full LDAP configuration
 ```
+
+**Important:** 
+- The `.env` file must be in the **project root directory** (same level as this README.md file)
+- The `.env.example` file is now located in the project root with all configuration options
+- See the `.env.example` file for complete configuration documentation
 
 ### 3. **Start the Platform**
 
