@@ -2,6 +2,7 @@ import jwt
 import os
 from datetime import datetime, timedelta
 from django.conf import settings
+from django.contrib.auth.models import User
 
 class ServiceAuthManager:
     """Manage service-to-service authentication"""
@@ -72,5 +73,51 @@ class ServiceAuthManager:
         return {
             'Authorization': f'Bearer {token}',
             'X-Service-Auth': service_name,
+            'Content-Type': 'application/json'
+        }
+    
+    @staticmethod
+    def generate_user_token(user: User, expires_minutes: int = 60) -> str:
+        """
+        Generate JWT token for a specific user for gateway communication
+        
+        Args:
+            user: Django User instance
+            expires_minutes: Token expiration time in minutes
+            
+        Returns:
+            str: JWT token for user authentication
+        """
+        payload = {
+            'user_id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'is_staff': user.is_staff,
+            'is_superuser': user.is_superuser,
+            'groups': [group.name for group in user.groups.all()],
+            'auth_method': 'ldap' if getattr(settings, 'LDAP_ENABLED', False) else 'local',
+            'iat': datetime.utcnow(),
+            'exp': datetime.utcnow() + timedelta(minutes=expires_minutes),
+            'iss': 'skynet-frontend',
+            'type': 'user_token'
+        }
+        
+        secret_key = os.environ.get('JWT_SECRET_KEY', settings.SECRET_KEY)
+        return jwt.encode(payload, secret_key, algorithm='HS256')
+    
+    @staticmethod
+    def get_user_headers(user: User) -> dict:
+        """
+        Get headers for user requests to gateway
+        
+        Args:
+            user: Django User instance
+            
+        Returns:
+            dict: Headers with user authentication
+        """
+        token = ServiceAuthManager.generate_user_token(user)
+        return {
+            'Authorization': f'Bearer {token}',
             'Content-Type': 'application/json'
         }

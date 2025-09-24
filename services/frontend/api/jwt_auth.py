@@ -19,7 +19,9 @@ def jwt_required(view_func):
         token = auth_header.split(' ')[1]
         
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            # Use JWT_SECRET_KEY from settings or fallback to SECRET_KEY
+            jwt_secret = getattr(settings, 'SIMPLE_JWT', {}).get('SIGNING_KEY', settings.SECRET_KEY)
+            payload = jwt.decode(token, jwt_secret, algorithms=['HS256'])
             user_id = payload.get('user_id')
             
             if not user_id:

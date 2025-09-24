@@ -2,7 +2,8 @@ from fastapi import FastAPI, HTTPException, Depends, File, UploadFile, Form, Hea
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import requests
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
+from auth import get_current_user, get_optional_user, require_staff, require_superuser
 
 app = FastAPI(title="Skynet RC1 API Gateway", version="1.0.0")
 
@@ -28,12 +29,12 @@ async def health_check():
 @app.post("/api/upload")
 async def upload_document(
     file: UploadFile = File(...),
-    user_id: int = Form(...)
+    user: Dict[str, Any] = Depends(get_current_user)
 ):
-    """Upload document to document service"""
+    """Upload document to document service - requires authentication"""
     try:
         files = {'file': (file.filename, await file.read(), file.content_type)}
-        data = {'user_id': user_id}
+        data = {'user_id': user['user_id']}
         
         response = requests.post(f"{document_service_url}/upload", files=files, data=data, timeout=60)
         response.raise_for_status()
@@ -42,64 +43,86 @@ async def upload_document(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/documents")
-async def get_documents(user_id: int):
-    """Get user's documents"""
+async def get_documents(user: Dict[str, Any] = Depends(get_current_user)):
+    """Get user's documents - requires authentication"""
     try:
-        response = requests.get(f"{document_service_url}/documents", params={'user_id': user_id})
+        response = requests.get(f"{document_service_url}/documents", params={'user_id': user['user_id']})
         response.raise_for_status()
         return response.json()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/chat")
-async def chat(request: dict):
-    """Chat with AI"""
+async def chat(
+    request: dict,
+    user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Chat with AI - requires authentication"""
     try:
         message = request.get('message')
-        user_id = request.get('user_id')
         session_id = request.get('session_id')
         
-        if not message or not user_id:
-            raise HTTPException(status_code=400, detail="Message and user_id are required")
+        if not message:
+            raise HTTPException(status_code=400, detail="Message is required")
         
-        response = requests.post(f"{ai_chat_service_url}/chat", json=request, timeout=120)
+        # Add authenticated user ID to request
+        chat_request = {
+            **request,
+            'user_id': user['user_id']
+        }
+        
+        response = requests.post(f"{ai_chat_service_url}/chat", json=chat_request, timeout=120)
         response.raise_for_status()
         return response.json()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/search")
-async def search_documents(request: dict):
-    """Search documents"""
+async def search_documents(
+    request: dict,
+    user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Search documents - requires authentication"""
     try:
         query = request.get('query')
-        user_id = request.get('user_id')
         limit = request.get('limit', 5)
         
-        if not query or not user_id:
-            raise HTTPException(status_code=400, detail="Query and user_id are required")
+        if not query:
+            raise HTTPException(status_code=400, detail="Query is required")
         
-        response = requests.post(f"{ai_chat_service_url}/search", json=request, timeout=60)
+        # Add authenticated user ID to request
+        search_request = {
+            **request,
+            'user_id': user['user_id']
+        }
+        
+        response = requests.post(f"{ai_chat_service_url}/search", json=search_request, timeout=60)
         response.raise_for_status()
         return response.json()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/sessions")
-async def get_chat_sessions(user_id: int):
-    """Get user's chat sessions"""
+async def get_chat_sessions(user: Dict[str, Any] = Depends(get_current_user)):
+    """Get user's chat sessions - requires authentication"""
     try:
-        response = requests.get(f"{ai_chat_service_url}/sessions", params={'user_id': user_id})
+        response = requests.get(f"{ai_chat_service_url}/sessions", params={'user_id': user['user_id']})
         response.raise_for_status()
         return response.json()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/sessions/{session_id}")
-async def get_session_messages(session_id: int, user_id: int):
-    """Get messages for a specific session"""
+async def get_session_messages(
+    session_id: int,
+    user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Get messages for a specific session - requires authentication"""
     try:
-        response = requests.get(f"{ai_chat_service_url}/sessions/{session_id}", params={'user_id': user_id})
+        response = requests.get(
+            f"{ai_chat_service_url}/sessions/{session_id}", 
+            params={'user_id': user['user_id']}
+        )
         response.raise_for_status()
         return response.json()
     except Exception as e:
