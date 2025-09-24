@@ -17,12 +17,13 @@ echo "⏰ Started at: $(date 2>/dev/null || echo 'unknown')"
 echo "🖥️  Platform: $(uname -s 2>/dev/null || echo 'unknown') $(uname -m 2>/dev/null || echo 'unknown')"
 echo ""
 
-# Check for .env file
+# Check for .env file in project root
 ENV_FILE="../.env"
 if [ ! -f "$ENV_FILE" ]; then
-    echo "❌ ERROR: .env file not found!"
+    echo "❌ ERROR: .env file not found in project root!"
     echo ""
     echo "📋 Please copy .env.example to .env and configure your environment:"
+    echo "   cd .."
     echo "   cp .env.example .env"
     echo "   # Edit .env with your preferred settings"
     echo ""
@@ -31,10 +32,20 @@ if [ ! -f "$ENV_FILE" ]; then
     echo "   - SECRET_KEY"
     echo "   - OLLAMA_MODEL"
     echo ""
+    echo "💡 The .env file should be in the project root directory (same level as README.md)"
+    echo ""
     exit 1
 fi
 
-echo "✅ Found .env file"
+echo "✅ Found .env file in project root"
+
+# Create symlink to .env file for docker-compose
+if [ ! -f ".env" ]; then
+    echo "🔗 Creating symlink to .env file for docker-compose"
+    ln -sf "../.env" ".env"
+else
+    echo "🔗 Using existing .env symlink"
+fi
 
 # Note about database initialization
 if [ ! -d "../data/postgres" ]; then

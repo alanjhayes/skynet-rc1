@@ -21,7 +21,6 @@ until ollama list >/dev/null 2>&1; do
     sleep 5
 done
 
-
 # Check if model exists
 echo "Checking if model $MODEL_NAME exists..."
 if ! ollama list | grep -q "$MODEL_NAME"; then
