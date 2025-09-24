@@ -30,6 +30,7 @@ if [ ! -f "$ENV_FILE" ]; then
     echo "🔧 Required environment variables:"
     echo "   - POSTGRES_PASSWORD"
     echo "   - SECRET_KEY"
+    echo "   - JWT_SECRET_KEY"
     echo "   - OLLAMA_MODEL"
     echo ""
     echo "💡 The .env file should be in the project root directory (same level as README.md)"

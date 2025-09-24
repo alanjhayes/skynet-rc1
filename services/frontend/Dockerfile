@@ -23,6 +23,9 @@ COPY . .
 # Create data directory
 RUN mkdir -p /app/data/uploads
 
+# Make startup script executable
+RUN chmod +x startup.sh
+
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -30,5 +33,5 @@ ENV PYTHONUNBUFFERED=1
 # Expose port
 EXPOSE 8000
 
-# Run migrations and start server
-CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:8000 --workers 3 core.wsgi:application"]
+# Use startup script
+CMD ["bash", "startup.sh"]

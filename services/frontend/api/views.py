@@ -9,7 +9,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.conf import settings
-# from .jwt_auth import jwt_required  # Temporarily disabled
+from .service_auth import ServiceAuthManager
 
 # API Gateway URL
 API_GATEWAY_URL = os.environ.get('API_GATEWAY_URL', 'http://gateway:8000')
@@ -104,9 +104,10 @@ def upload_document(request):
         if file.size > settings.MAX_UPLOAD_SIZE:
             return JsonResponse({'error': 'File too large'}, status=400)
         
-        # Forward to API Gateway (back to original approach temporarily)
+        # Forward to API Gateway with proper JWT authentication
         files = {'file': (file.name, file.read(), file.content_type)}
         data = {'user_id': user.id}
+        headers = ServiceAuthManager.get_user_headers(user)
         
         # Debug logging
         print(f"Upload request - User ID: {user.id}, File: {file.name}")
@@ -115,6 +116,7 @@ def upload_document(request):
             f"{API_GATEWAY_URL}/api/upload",
             files=files,
             data=data,
+            headers=headers,
             timeout=60
         )
         
@@ -138,16 +140,18 @@ def chat_api(request):
         if not message:
             return JsonResponse({'error': 'No message provided'}, status=400)
         
-        # Forward to API Gateway
+        # Forward to API Gateway with JWT authentication
         chat_data = {
             'message': message,
             'user_id': request.user.id,
             'session_id': session_id
         }
+        headers = ServiceAuthManager.get_user_headers(request.user)
         
         response = requests.post(
             f"{API_GATEWAY_URL}/api/chat",
             json=chat_data,
+            headers=headers,
             timeout=60
         )
         
@@ -162,9 +166,11 @@ def chat_api(request):
 @login_required
 def documents_api(request):
     try:
+        headers = ServiceAuthManager.get_user_headers(request.user)
         response = requests.get(
             f"{API_GATEWAY_URL}/api/documents",
-            params={'user_id': request.user.id}
+            params={'user_id': request.user.id},
+            headers=headers
         )
         
         if response.status_code == 200:
@@ -178,9 +184,11 @@ def documents_api(request):
 @login_required
 def sessions_api(request):
     try:
+        headers = ServiceAuthManager.get_user_headers(request.user)
         response = requests.get(
             f"{API_GATEWAY_URL}/api/sessions",
-            params={'user_id': request.user.id}
+            params={'user_id': request.user.id},
+            headers=headers
         )
         
         if response.status_code == 200:
@@ -194,9 +202,11 @@ def sessions_api(request):
 @login_required
 def session_detail_api(request, session_id):
     try:
+        headers = ServiceAuthManager.get_user_headers(request.user)
         response = requests.get(
             f"{API_GATEWAY_URL}/api/sessions/{session_id}",
-            params={'user_id': request.user.id}
+            params={'user_id': request.user.id},
+            headers=headers
         )
         
         if response.status_code == 200:
