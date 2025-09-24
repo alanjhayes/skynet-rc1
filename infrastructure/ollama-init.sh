@@ -15,13 +15,11 @@ echo "Checking if Ollama model $MODEL_NAME is available..."
 
 # Wait for Ollama to be ready
 echo "Waiting for Ollama at $OLLAMA_BASE_URL to be ready..."
-until curl -f "$OLLAMA_BASE_URL/api/tags" >/dev/null 2>&1; do
+export OLLAMA_HOST="$OLLAMA_BASE_URL"
+until ollama list >/dev/null 2>&1; do
     echo "Waiting for Ollama to start..."
     sleep 5
 done
-
-# Set OLLAMA_HOST for the ollama CLI
-export OLLAMA_HOST="$OLLAMA_BASE_URL"
 
 # Check if model exists
 echo "Checking if model $MODEL_NAME exists..."
